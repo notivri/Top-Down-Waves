@@ -5,9 +5,12 @@
   "description": "**Top-Down Waves** — это компактный прототип аркадного **survival shooter** с видом сверху, реализованный на чистом **HTML / CSS / JavaScript** с использованием **Canvas API**.  \r Цель игры — продержаться как можно дольше, отражая волны врагов, подбирая бафы и управляя ресурсами (HP, запасные жизни).",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "live-server"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
 }
