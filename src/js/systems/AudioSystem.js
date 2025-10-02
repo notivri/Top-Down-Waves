@@ -25,13 +25,13 @@ export class AudioSystem {
       
       if (!config) return;
 
-      if (type === 'fire') {
-        this.playFireSound(now, config);
-      } else if (type === 'enemyDeath') {
-        this.playEnemyDeathSound(now, config);
-      } else if (type === 'pickup') {
-        this.playPickupSound(now, config);
+      const mapping = {
+        fire: () => this.playFireSound(now, config),
+        enemyDeath: () => this.playEnemyDeathSound(now, config),
+        pickup: () => this.playPickupSound(now, config),
       }
+
+      mapping[type]();
     } catch (e) {
       // Игнорируем ошибки воспроизведения аудио
       console.warn('Audio playback error:', e);

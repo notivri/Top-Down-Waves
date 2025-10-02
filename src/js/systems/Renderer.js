@@ -69,19 +69,25 @@ export class Renderer {
       // Основная форма
       this.ctx.beginPath();
       this.ctx.fillStyle = enemy.color;
-      
-      if (enemy.type === 'circle') {
-        this.ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
-        this.ctx.fill();
-      } else if (enemy.type === 'square') {
-        this.ctx.fillRect(enemy.x - enemy.radius, enemy.y - enemy.radius, enemy.radius * 2, enemy.radius * 2);
-      } else if (enemy.type === 'triangle') {
-        this.ctx.moveTo(enemy.x, enemy.y - enemy.radius);
-        this.ctx.lineTo(enemy.x - enemy.radius, enemy.y + enemy.radius);
-        this.ctx.lineTo(enemy.x + enemy.radius, enemy.y + enemy.radius);
-        this.ctx.closePath();
-        this.ctx.fill();
+
+      const colors = {
+        circle: () => {
+          this.ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
+          this.ctx.fill();
+        },
+        square: () => {
+          this.ctx.fillRect(enemy.x - enemy.radius, enemy.y - enemy.radius, enemy.radius * 2, enemy.radius * 2);
+        },
+        triangle: () => {
+          this.ctx.moveTo(enemy.x, enemy.y - enemy.radius);
+          this.ctx.lineTo(enemy.x - enemy.radius, enemy.y + enemy.radius);
+          this.ctx.lineTo(enemy.x + enemy.radius, enemy.y + enemy.radius);
+          this.ctx.closePath();
+          this.ctx.fill();
+        } 
       }
+
+      colors[enemy.type]()
       
       // Полоска здоровья
       this.renderEnemyHealthBar(enemy);
