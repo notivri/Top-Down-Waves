@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Top-Down Waves — v2</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="left">
+        <div class="panel">
+          <header>
+            <div class="logo">
+              <div class="logo-box">TD</div>
+              <div>
+                <h1>Top-Down Waves</h1>
+                <small>WASD — движение; ЛКМ - Выстрелить в направлении курсора</small>
+              </div>
+            </div>
+
+            <div class="controls">
+              <button class="btn" id="btnStart">Старт</button>
+              <button class="btn" id="btnPause" disabled>Пауза</button>
+              <button class="btn" id="btnRestart" disabled>Рестарт</button>
+              <button class="btn" id="btnReadme">README</button>
+            </div>
+          </header>
+
+          <div class="center">
+            <canvas id="gameCanvas" width="900" height="600"></canvas>
+          </div>
+
+          <div class="hud">
+            <div>
+              <div class="label">HP</div>
+              <div class="hpbar"><div id="hpfill" class="hpfill" style="width: 100%"></div></div>
+            </div>
+            <div>
+              <div class="label">Волна</div>
+              <div class="value" id="uiWave">-</div>
+            </div>
+            <div>
+              <div class="label">Очки</div>
+              <div class="value" id="uiScore">0</div>
+            </div>
+            <div>
+              <div class="label">Жизни</div>
+              <div class="value" id="uiLives">0</div>
+            </div>
+            <div class="buffs" id="uiBuffs"></div>
+          </div>
+
+          <div class="panel small">
+            <small>Инструкция: нажми <b>Старт</b>, управляй WASD. Подбирай бафы: DoubleShot, ExtraLife, Invuln, Speed.</small>
+          </div>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <div class="panel">
+          <h3>Параметры игрока</h3>
+          <div>HP: <span id="statHP">100</span></div>
+          <div>Скорость: <span id="statSpeed">140</span></div>
+          <div>Урон: <span id="statDmg">20</span></div>
+          <div>Пауза между выстрелами: <span id="statFire">0.45</span> с</div>
+          <div style="margin-top: 10px"><button class="btn" id="btnDownloadReadme">Скачать README.txt</button></div>
+        </div>
+
+        <div style="height: 12px"></div>
+
+        <div class="panel">
+          <h3>Баффы</h3>
+          <ul>
+            <li><b>DoubleShot</b> — удваивает количество пуль; стак: 1→2→4→8.</li>
+            <li><b>ExtraLife</b> — дополнительная жизнь (до 3 запасных).</li>
+            <li><b>Invuln</b> — неуязвимость 5 с (не стакается, обновляет таймер).</li>
+            <li><b>Speed</b> — ускорение; может стакаться (до 3 стэков).</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Game Over -->
+    <div id="overlayGameOver" class="overlay">
+      <div class="modal">
+        <h2 id="goTitle">Игра окончена</h2>
+        <div id="goText"></div>
+        <div style="margin-top: 12px"><button class="btn" id="btnGoRestart">Играть заново</button></div>
+      </div>
+    </div>
+
+    <!-- README Modal -->
+    <div id="modalReadme" class="overlay">
+      <div class="modal readme-modal">
+        <h2>README — Top-Down Waves v2</h2>
+        <div class="readme-area" id="readmeText"></div>
+        <div style="margin-top: 12px">
+          <button class="btn" id="closeReadme">Закрыть</button>
+          <button class="btn" id="downloadReadmeBtn">Скачать README.txt</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./src/index.js"></script>
+  </body>
+</html>
