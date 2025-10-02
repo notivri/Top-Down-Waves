@@ -9,7 +9,7 @@ export const randInt = (a, b) => Math.floor(rand(a, b + 1));
 // Ограничить значение v в диапазоне [a, b]
 export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-// Евклидово расстояние между двумя точками/объектами
+// расстояние между двумя точками/объектами
 export const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
 // Проверка столкновения двух кругов

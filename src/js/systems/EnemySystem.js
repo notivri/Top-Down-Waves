@@ -1,27 +1,22 @@
 import { CONFIG } from '../core/config.js';
 import { rand, randInt, clamp, getDirection } from '../utils/math.js';
 
-// Система врагов
 export class EnemySystem {
   constructor() {
     this.enemies = [];
   }
 
-  // Создание врага для определенной волны
   spawnEnemyForWave(waveNum, typeOverride = null) {
     const config = CONFIG.ENEMIES;
     const baseHp = config.baseHp + Math.floor(waveNum * 8);
     const baseSpeed = clamp(config.baseSpeed + waveNum * 6 + Math.random() * 30, config.baseSpeed, 260);
     
-    // Случайная позиция спавна на краю экрана
     const { x, y } = this.getSpawnPosition();
     
-    // Выбор типа врага
     const typeChance = Math.min(0.25 + waveNum * 0.02, 0.85);
     const types = Object.keys(config.types);
-    const type = typeOverride || (Math.random() < typeChance ? types[randInt(0, types.length - 1)] : 'circle');
+    const type = typeOverride || (Math.random() < typeChance ? types[randInt(0, types.length - 1)] : 'basic');
     
-    // Настройки по типу
     const typeConfig = config.types[type];
     const radius = randInt(...typeConfig.radiusRange);
     const speed = baseSpeed * typeConfig.speedModifier;
@@ -35,14 +30,15 @@ export class EnemySystem {
       maxHp: hp,
       speed,
       type,
-      color: typeConfig.color
+      color: typeConfig.color,
+      targetX: CONFIG.CSS_WIDTH / 2,  
+      targetY: CONFIG.CSS_HEIGHT / 2
     };
 
     this.enemies.push(enemy);
     return enemy;
   }
 
-  // Получение случайной позиции спавна
   getSpawnPosition() {
     const margin = CONFIG.ENEMIES.spawnMargin;
     const side = randInt(0, 3);
@@ -61,7 +57,6 @@ export class EnemySystem {
     }
   }
 
-  // Обновление всех врагов
   update(dt, player, timeScale) {
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const enemy = this.enemies[i];
@@ -69,9 +64,10 @@ export class EnemySystem {
     }
   }
 
-  // Обновление отдельного врага
   updateEnemy(enemy, dt, player, timeScale) {
-    // Движение к игроку
+    enemy.targetX = player.x;
+    enemy.targetY = player.y;
+    
     const direction = getDirection(enemy, player);
     const actualSpeed = enemy.speed * timeScale;
     
@@ -79,12 +75,11 @@ export class EnemySystem {
     enemy.y += direction.y * actualSpeed * dt;
   }
 
-  // Проверка столкновения с игроком
   checkPlayerCollision(player) {
     for (const enemy of this.enemies) {
       const distance = Math.hypot(enemy.x - player.x, enemy.y - player.y);
       if (distance <= enemy.radius + player.radius + 2) {
-        // Отбрасываем врага от игрока
+
         const direction = getDirection(player, enemy);
         enemy.x += direction.x * 24;
         enemy.y += direction.y * 24;
@@ -94,7 +89,6 @@ export class EnemySystem {
     return false;
   }
 
-  // Нанесение урона врагу
   damageEnemy(enemyIndex, damage) {
     if (enemyIndex < 0 || enemyIndex >= this.enemies.length) return false;
     
@@ -109,22 +103,18 @@ export class EnemySystem {
     return { killed: false, enemy };
   }
 
-  // Получение всех врагов
   getEnemies() {
     return this.enemies;
   }
 
-  // Очистка всех врагов
   clear() {
     this.enemies = [];
   }
 
-  // Получение количества врагов
   getCount() {
     return this.enemies.length;
   }
 
-  // Поиск ближайшего врага к точке
   findClosestEnemy(x, y) {
     if (this.enemies.length === 0) return null;
     

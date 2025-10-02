@@ -5,14 +5,12 @@ const README_TEXT = `# Top-Down Waves
 Top-Down Waves — аркадная survival-игра с видом сверху. Игрок управляет персонажем (WASD) и автоматически стреляет в ближайших врагов.
 Цель — продержаться как можно дольше, уничтожая волны противников и подбирая бафы.`
 
-// Менеджер пользовательского интерфейса
 export class UIManager {
   constructor() {
     this.initializeElements()
     this.setupEventListeners()
   }
 
-  // Инициализация элементов DOM
   initializeElements() {
     // HUD элементы
     this.hpfill = document.getElementById("hpfill")
@@ -125,6 +123,11 @@ export class UIManager {
 
   setButtonStates(gameState) {
     const stateMap = {
+      loading: () => {
+        this.btnStart && this.setBtn(this.btnStart, true, "Загрузка...")
+        this.btnPause && (this.btnPause.disabled = true)
+        this.btnRestart && (this.btnRestart.disabled = true)
+      },
       menu: () => {
         this.btnStart && this.setBtn(this.btnStart, false, "Старт")
         this.btnPause && (this.btnPause.disabled = true)

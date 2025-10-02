@@ -1,4 +1,3 @@
-// Система управления вводом (клавиатура и мышь)
 export class InputSystem {
   constructor(canvas, game) {
     this.canvas = canvas
@@ -15,9 +14,7 @@ export class InputSystem {
     this.setupEventListeners()
   }
 
-  // Настройка обработчиков событий
   setupEventListeners() {
-    // Движение мыши
     this.canvas.addEventListener("mousemove", (event) => {
       if (this.game.getGameState() === "running") {
         const rect = this.canvas.getBoundingClientRect()
@@ -26,7 +23,6 @@ export class InputSystem {
       }
     })
 
-    // Клики мыши
     this.canvas.addEventListener("mousedown", () => {
       this.mouseDown = true
       if (this.callbacks.shoot) {
@@ -38,7 +34,6 @@ export class InputSystem {
       this.mouseDown = false
     })
 
-    // Клавиатура
     window.addEventListener("keydown", (e) => {
       this.handleKeyDown(e)
     })
@@ -48,7 +43,6 @@ export class InputSystem {
     })
   }
 
-  // Обработка нажатия клавиш
   handleKey(e, isDown) {
     const keyMap = {
       KeyW: () => (this.keys.w = isDown),
@@ -73,7 +67,6 @@ export class InputSystem {
     this.handleKey(e, false)
   }
 
-  // Обработка Escape
   handleEscape() {
     const modalReadme = document.getElementById("modalReadme")
     if (modalReadme && modalReadme.style.display === "flex") {
@@ -81,7 +74,6 @@ export class InputSystem {
     }
   }
 
-  // Получение вектора движения
   getMovementVector() {
     let vx = 0
     let vy = 0
@@ -101,7 +93,6 @@ export class InputSystem {
     return { x: vx, y: vy }
   }
 
-  // Установка коллбеков
   setShootCallback(callback) {
     this.callbacks.shoot = callback
   }
@@ -114,7 +105,6 @@ export class InputSystem {
     this.callbacks.resume = callback
   }
 
-  // Геттеры
   getMousePos() {
     return this.mousePos
   }

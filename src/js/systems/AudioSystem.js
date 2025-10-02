@@ -1,20 +1,17 @@
 import { CONFIG } from '../core/config.js';
 
-// Система аудио для WebAudio звуковых эффектов
 export class AudioSystem {
   constructor() {
     this.audioCtx = null;
     this.AudioCtx = window.AudioContext || window.webkitAudioContext;
   }
 
-  // Создание аудио контекста при первом использовании
   ensureAudio() {
     if (!this.audioCtx && this.AudioCtx) {
       this.audioCtx = new this.AudioCtx();
     }
   }
 
-  // Воспроизведение звука по типу
   playSound(type) {
     try {
       this.ensureAudio();
@@ -33,12 +30,10 @@ export class AudioSystem {
 
       mapping[type]();
     } catch (e) {
-      // Игнорируем ошибки воспроизведения аудио
       console.warn('Audio playback error:', e);
     }
   }
 
-  // Звук выстрела
   playFireSound(now, config) {
     const oscillator = this.audioCtx.createOscillator();
     const gain = this.audioCtx.createGain();
@@ -57,7 +52,6 @@ export class AudioSystem {
     oscillator.stop(now + config.duration);
   }
 
-  // Звук смерти врага
   playEnemyDeathSound(now, config) {
     const osc1 = this.audioCtx.createOscillator();
     const osc2 = this.audioCtx.createOscillator();
@@ -80,7 +74,6 @@ export class AudioSystem {
     osc2.stop(now + config.duration);
   }
 
-  // Звук подбора предмета
   playPickupSound(now, config) {
     const oscillator = this.audioCtx.createOscillator();
     const gain = this.audioCtx.createGain();

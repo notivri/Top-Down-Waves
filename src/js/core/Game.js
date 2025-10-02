@@ -8,33 +8,37 @@ import { InputSystem } from '../systems/InputSystem.js';
 import { Renderer } from '../systems/Renderer.js';
 import { UIManager } from '../ui/UIManager.js';
 
-// Основной класс игры
 export class Game {
   constructor(canvas, ctx) {
     this.canvas = canvas;
     this.ctx = ctx;
     
-    // Состояние игры
-    this.gameState = 'menu';
+    this.gameState = 'loading';
     this.lastTime = null;
     this.rafId = null;
     this.score = 0;
     this.wave = 0;
     this.elapsedTime = 0;
     
-    // Спавн врагов
     this.evilSpawn = 0;
     this.spawnTimer = 0;
     
-    // Инициализация систем
-    this.initializeSystems();
+    this.initialize();
+  }
+
+  async initialize() {
+    this.uiManager = new UIManager();
+    this.uiManager.initialize();
+    this.uiManager.setButtonStates('loading');
+    
+    await this.initializeSystems();
     this.setupCallbacks();
+    this.gameState = 'menu';
+    this.uiManager.setButtonStates('menu');
     this.startGameLoop();
   }
 
-  // Инициализация всех систем
-  initializeSystems() {
-    // Создание сущностей и систем
+  async initializeSystems() {
     this.player = new Player(CONFIG.CSS_WIDTH / 2, CONFIG.CSS_HEIGHT / 2);
     this.enemySystem = new EnemySystem();
     this.bulletSystem = new BulletSystem();
@@ -42,18 +46,24 @@ export class Game {
     this.audioSystem = new AudioSystem();
     this.inputSystem = new InputSystem(this.canvas, this);
     this.renderer = new Renderer(this.canvas, this.ctx);
-    this.uiManager = new UIManager();
     
-    this.uiManager.initialize();
+    await this.waitForImagesLoaded();
   }
 
-  // Настройка коллбеков между системами
+  async waitForImagesLoaded() {
+    const checkInterval = 50; // мс
+    
+    while (!this.renderer.imagesLoaded) {
+      await new Promise(resolve => setTimeout(resolve, checkInterval));
+    }
+    
+    console.log("Images loaded, game ready to start");
+  }
+
   setupCallbacks() {
-    // Коллбеки ввода
     this.inputSystem.setShootCallback((x, y) => this.handleShoot(x, y));
     this.inputSystem.setPauseCallback(() => this.handlePause());
     
-    // Коллбеки UI
     this.uiManager.setCallbacks({
       startGame: () => this.startNewGame(),
       pauseGame: () => this.handlePause(),
@@ -61,7 +71,6 @@ export class Game {
     });
   }
 
-  // Обработка выстрела
   handleShoot(x, y) {
     if (this.gameState !== 'running') return;
     
@@ -72,7 +81,6 @@ export class Game {
     }
   }
 
-  // Обработка паузы
   handlePause() {
     if (this.gameState === 'running') {
       this.pauseGame();
@@ -81,23 +89,19 @@ export class Game {
     }
   }
 
-  // Основной цикл обновления
   update(dt) {
     if (this.gameState !== 'running') return;
     
     this.elapsedTime += dt;
     
-    // Обновление игрока
     const movementVector = this.inputSystem.getMovementVector();
     this.player.update(dt, movementVector);
     
-    // Автоматическая стрельба при зажатой мыши
     if (this.inputSystem.isMouseDown()) {
       const mousePos = this.inputSystem.getMousePos();
       this.handleShoot(mousePos.x, mousePos.y);
     }
     
-    // Обновление пуль и проверка попаданий
     const bulletResult = this.bulletSystem.update(dt, this.enemySystem);
     if (bulletResult && bulletResult.type === 'enemyKilled') {
       this.score += bulletResult.score;
@@ -109,13 +113,10 @@ export class Game {
     const timeScale = 1 + Math.floor(this.elapsedTime / 60) * 0.06;
     this.enemySystem.update(dt, this.player, timeScale);
     
-    // Проверка столкновений с игроком
     if (this.enemySystem.checkPlayerCollision(this.player)) {
       const damaged = this.player.takeDamage(10);
-      // Враги уже отброшены в enemySystem.checkPlayerCollision
     }
     
-    // Обновление подбираемых предметов
     const pickupResults = this.pickupSystem.update(dt, this.player);
     for (const result of pickupResults) {
       if (result.type === 'pickupCollected') {
@@ -123,20 +124,16 @@ export class Game {
       }
     }
     
-    // Обновление спавна врагов
     this.updateWaveSpawning(dt);
     
-    // Проверка смерти игрока
     const deathResult = this.player.handleDeath();
     if (deathResult === 'gameOver') {
       this.gameOver();
     }
     
-    // Обновление UI
     this.uiManager.updateHUD(this.player, this.wave, this.score);
   }
 
-  // Обновление спавна волн
   updateWaveSpawning(dt) {
     if (this.evilSpawn > 0) {
       this.spawnTimer -= dt;
@@ -159,7 +156,6 @@ export class Game {
     }
   }
 
-  // Начало новой волны
   startWave(waveNum) {
     this.wave = waveNum;
     const minuteFactor = 1 + Math.floor(this.elapsedTime / 60) * CONFIG.WAVE.minuteBonus;
@@ -167,8 +163,12 @@ export class Game {
     this.spawnTimer = 0.4;
   }
 
-  // Рендеринг
   render() {
+    if (this.gameState === 'loading') {
+      this.renderLoadingScreen();
+      return;
+    }
+
     const gameData = {
       player: this.player,
       enemies: this.enemySystem.getEnemies(),
@@ -182,7 +182,31 @@ export class Game {
     this.renderer.render(gameData);
   }
 
-  // Основной игровой цикл
+  renderLoadingScreen() {
+    this.ctx.clearRect(0, 0, CONFIG.CSS_WIDTH, CONFIG.CSS_HEIGHT);
+    
+    this.ctx.save();
+    this.ctx.fillStyle = '#ffffff';
+    this.ctx.font = '24px Arial';
+    this.ctx.textAlign = 'center';
+    
+    const status = this.renderer ? this.renderer.getImagesLoadedStatus() : { loaded: false, count: 0 };
+    
+    this.ctx.fillText(
+      'Загрузка изображений...', 
+      CONFIG.CSS_WIDTH / 2, 
+      CONFIG.CSS_HEIGHT / 2 - 20
+    );
+    
+    this.ctx.font = '16px Arial';
+    this.ctx.fillText(
+      `Загружено: ${status.count} изображений`, 
+      CONFIG.CSS_WIDTH / 2, 
+      CONFIG.CSS_HEIGHT / 2 + 20
+    );
+    this.ctx.restore();
+  }
+
   gameLoop(timestamp) {
     if (!this.lastTime) this.lastTime = timestamp;
     const dt = Math.min(0.05, (timestamp - this.lastTime) / 1000);
@@ -194,14 +218,12 @@ export class Game {
     this.rafId = requestAnimationFrame((ts) => this.gameLoop(ts));
   }
 
-  // Запуск игрового цикла
   startGameLoop() {
     if (!this.rafId) {
       this.rafId = requestAnimationFrame((ts) => this.gameLoop(ts));
     }
   }
 
-  // Остановка игрового цикла
   stopGameLoop() {
     if (this.rafId) {
       cancelAnimationFrame(this.rafId);
@@ -209,53 +231,44 @@ export class Game {
     }
   }
 
-  // Начало новой игры
   startNewGame() {
     this.score = 0;
     this.wave = 0;
     this.elapsedTime = 0;
     this.lastTime = null;
     
-    // Сброс всех систем
     this.player.reset();
     this.enemySystem.clear();
     this.bulletSystem.clear();
     this.pickupSystem.clear();
     
-    // Начало первой волны
     this.startWave(1);
     
-    // Обновление состояния
     this.gameState = 'running';
     this.uiManager.setButtonStates(this.gameState);
     this.uiManager.hideGameOver();
     
-    // Запуск игрового цикла
     this.startGameLoop();
   }
 
-  // Пауза игры
   pauseGame() {
     if (this.gameState !== 'running') return;
     this.gameState = 'paused';
     this.uiManager.setButtonStates(this.gameState);
   }
 
-  // Возобновление игры
   resumeGame() {
     if (this.gameState !== 'paused') return;
     this.gameState = 'running';
     this.uiManager.setButtonStates(this.gameState);
   }
 
-  // Окончание игры
   gameOver() {
     this.gameState = 'gameover';
     this.uiManager.setButtonStates(this.gameState);
     this.uiManager.showGameOver(this.wave, this.score);
   }
 
-  // Получение текущего состояния игры
   getGameState() {
     return this.gameState;
   }

@@ -1,7 +1,6 @@
 import { CONFIG } from "../core/config.js"
 import { clamp } from "../utils/math.js"
 
-// Класс игрока
 export class Player {
   constructor(x, y) {
     this.x = x
@@ -19,14 +18,12 @@ export class Player {
     this.buffs = {}
   }
 
-  // Обновление игрока
   update(dt, movementVector) {
     this.updateMovement(dt, movementVector)
     this.updateBuffs(dt)
     this.updateCooldowns(dt)
   }
 
-  // Обновление движения
   updateMovement(dt, movementVector) {
     const mag = Math.hypot(movementVector.x, movementVector.y)
     if (mag === 0) return
@@ -41,7 +38,6 @@ export class Player {
     this.y = clamp(this.y + vy * dt, this.radius, CONFIG.CSS_HEIGHT - this.radius)
   }
 
-  // Обновление бафов
   updateBuffs(dt) {
     for (const buffName of Object.keys(this.buffs)) {
       const buff = this.buffs[buffName]
@@ -54,12 +50,10 @@ export class Player {
     }
   }
 
-  // Обновление кулдаунов
   updateCooldowns(dt) {
     this.fireTimer = Math.max(0, this.fireTimer - dt)
   }
 
-  // Попытка выстрела
   tryShoot(targetX, targetY) {
     if (this.fireTimer > 0) return null
 
@@ -88,6 +82,7 @@ export class Player {
         vy,
         radius: CONFIG.BULLETS.radius,
         dmg,
+        angle: angle 
       })
     }
 
@@ -97,16 +92,14 @@ export class Player {
     return bullets
   }
 
-  // Получение урона
   takeDamage(damage) {
     if (this.buffs.Invuln && this.buffs.Invuln.timeLeft > 0) {
-      return false // Не получил урон
+      return false
     }
     this.hp -= damage
-    return true // Получил урон
+    return true 
   }
 
-  // Применение бафа
   applyBuff(pickup) {
     const type = pickup.type
     const config = CONFIG.PICKUPS.types[type]
@@ -127,9 +120,9 @@ export class Player {
       ExtraLife: () => {
         if (this.lives < this.maxExtraLives) {
           this.lives++
-          return true // Применился
+          return true 
         }
-        return false // Не применился
+        return false
       },
       Invuln: () => {
         this.buffs.Invuln = { timeLeft: config.duration }
@@ -151,7 +144,6 @@ export class Player {
     return true 
   }
 
-  // Проверка смерти и респавн
   handleDeath() {
     if (this.hp <= 0) {
       if (this.lives > 0) {
@@ -166,7 +158,6 @@ export class Player {
     return "alive"
   }
 
-  // Сброс к начальному состоянию
   reset() {
     this.x = CONFIG.CSS_WIDTH / 2
     this.y = CONFIG.CSS_HEIGHT / 2
@@ -176,7 +167,6 @@ export class Player {
     this.fireTimer = 0
   }
 
-  // Получение статистики для UI
   getStats() {
     return {
       hp: Math.floor(this.hp),
