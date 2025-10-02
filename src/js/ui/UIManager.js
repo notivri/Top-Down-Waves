@@ -1,93 +1,84 @@
 import { clamp } from "../utils/math.js"
 
-// Менеджер пользовательского интерфейса
-export class UIManager {
-  static README_TEXT = `# Top-Down Waves
-
+const README_TEXT = `# Top-Down Waves
 Описание:
 Top-Down Waves — аркадная survival-игра с видом сверху. Игрок управляет персонажем (WASD) и автоматически стреляет в ближайших врагов.
-Цель — продержаться как можно дольше, уничтожая волны противников и подбирая бафы.
+Цель — продержаться как можно дольше, уничтожая волны противников и подбирая бафы.`
 
-Полный README доступен в файле README.md в той же папке проекта.`
-
+// Менеджер пользовательского интерфейса
+export class UIManager {
   constructor() {
     this.initializeElements()
     this.setupEventListeners()
   }
 
-  // Утилиты
-  setContent(el, value) {
-    if (el) el.textContent = value
-  }
-
-  setDisplay(el, value) {
-    if (el) el.style.display = value
-  }
-
   // Инициализация элементов DOM
   initializeElements() {
-    const ids = [
-      "hpfill",
-      "uiWave",
-      "uiScore",
-      "uiBuffs",
-      "uiLives",
-      "statHP",
-      "statSpeed",
-      "statDmg",
-      "statFire",
-      "btnStart",
-      "btnPause",
-      "btnRestart",
-      "btnReadme",
-      "overlayGameOver",
-      "goText",
-      "btnGoRestart",
-      "modalReadme",
-      "readmeText",
-      "btnDownloadReadmeBtn",
-      "btnDownloadReadme",
-      "closeReadme",
-    ]
+    // HUD элементы
+    this.hpfill = document.getElementById("hpfill")
+    this.uiWave = document.getElementById("uiWave")
+    this.uiScore = document.getElementById("uiScore")
+    this.uiBuffs = document.getElementById("uiBuffs")
+    this.uiLives = document.getElementById("uiLives")
 
-    ids.forEach((id) => (this[id] = document.getElementById(id)))
+    // Статистика
+    this.statHP = document.getElementById("statHP")
+    this.statSpeed = document.getElementById("statSpeed")
+    this.statDmg = document.getElementById("statDmg")
+    this.statFire = document.getElementById("statFire")
+
+    // Кнопки
+    this.btnStart = document.getElementById("btnStart")
+    this.btnPause = document.getElementById("btnPause")
+    this.btnRestart = document.getElementById("btnRestart")
+    this.btnReadme = document.getElementById("btnReadme")
+
+    // Оверлеи и модалки
+    this.overlayGameOver = document.getElementById("overlayGameOver")
+    this.goText = document.getElementById("goText")
+    this.btnGoRestart = document.getElementById("btnGoRestart")
+    this.modalReadme = document.getElementById("modalReadme")
+    this.readmeTextEl = document.getElementById("readmeText")
+    this.btnDownloadReadmeModal = document.getElementById("downloadReadmeBtn")
+    this.btnDownloadReadmeSidebar = document.getElementById("btnDownloadReadme")
+    this.closeReadmeBtn = document.getElementById("closeReadme")
   }
 
-  // Настройка обработчиков событий кнопок
   setupEventListeners() {
+    const eventMap = {
+      btnStart: () => this.callbacks?.startGame?.(),
+      btnPause: () => this.callbacks?.pauseGame?.(),
+      btnRestart: () => this.callbacks?.restartGame?.(),
+      btnGoRestart: () => {
+        this.hideGameOver()
+        this.callbacks?.restartGame?.()
+      },
+      btnReadme: () => this.showReadme(),
+      btnDownloadReadmeModal: () => this.downloadReadme(),
+      btnDownloadReadmeSidebar: () => this.downloadReadme(),
+      closeReadmeBtn: () => this.hideReadme(),
+      modalReadme: (e) => {
+        if (e.target === this.modalReadme) this.hideReadme()
+      },
+    }
+
     this.callbacks = {}
 
-    const onClick = (btn, handler) => btn?.addEventListener("click", handler)
-
-    onClick(this.btnStart, () => this.callbacks.startGame?.())
-    onClick(this.btnPause, () => this.callbacks.pauseGame?.())
-    onClick(this.btnRestart, () => this.callbacks.restartGame?.())
-    onClick(this.btnGoRestart, () => {
-      this.hideGameOver()
-      this.callbacks.restartGame?.()
-    })
-    onClick(this.btnReadme, () => this.showReadme())
-    onClick(this.btnDownloadReadmeModal, () => this.downloadReadme())
-    onClick(this.btnDownloadReadmeSidebar, () => this.downloadReadme())
-    onClick(this.closeReadmeBtn, () => this.hideReadme())
-
-    this.modalReadme?.addEventListener("click", (e) => {
-      if (e.target === this.modalReadme) this.hideReadme()
+    Object.entries(eventMap).forEach(([elName, handler]) => {
+      const el = this[elName]
+      if (el) el.addEventListener("click", handler)
     })
   }
 
-  // Обновление HUD
   updateHUD(player, wave, score) {
     const stats = player.getStats()
 
-    // Полоска здоровья
     if (this.hpfill) {
       const hpPercent = clamp((stats.hp / stats.maxHp) * 100, 0, 100)
       this.hpfill.style.width = `${hpPercent}%`
     }
 
-    // Текстовые элементы
-    const bindings = {
+    const uiMap = {
       uiWave: wave,
       uiScore: score,
       uiLives: stats.lives,
@@ -97,17 +88,19 @@ Top-Down Waves — аркадная survival-игра с видом сверху
       statFire: stats.fireRate,
     }
 
-    Object.entries(bindings).forEach(([key, value]) => this.setContent(this[key], value))
+    Object.entries(uiMap).forEach(([elName, value]) => {
+      if (this[elName]) this[elName].textContent = value
+    })
 
     this.renderBuffs(player.buffs)
   }
 
-  // Отображение активных бафов
   renderBuffs(buffs) {
     if (!this.uiBuffs) return
+
     this.uiBuffs.innerHTML = ""
 
-    const formatters = {
+    const buffRenderers = {
       Speed: (buff) => `Speed x${(1 + 0.7 * buff.stacks).toFixed(1)} ${Math.ceil(buff.timeLeft || 0)}s`,
       DoubleShot: (buff) => {
         const counts = [1, 2, 4, 8]
@@ -119,72 +112,68 @@ Top-Down Waves — аркадная survival-игра с видом сверху
       Power: (buff) => `Power ${Math.ceil(buff.timeLeft || 0)}s`,
     }
 
-    Object.entries(buffs).forEach(([buffName, buff]) => {
-      const el = document.createElement("div")
-      el.className = "buff"
-      const formatter = formatters[buffName]
-      if (formatter) el.textContent = formatter(buff)
-      this.uiBuffs.appendChild(el)
-    })
+    for (const [buffName, buff] of Object.entries(buffs)) {
+      const text = buffRenderers[buffName]?.(buff) || ""
+      if (text) {
+        const el = document.createElement("div")
+        el.className = "buff"
+        el.textContent = text
+        this.uiBuffs.appendChild(el)
+      }
+    }
   }
 
-  // Управление состоянием кнопок
   setButtonStates(gameState) {
-    const states = {
-      menu: {
-        btnStart: { disabled: false, text: "Старт" },
-        btnPause: { disabled: true },
-        btnRestart: { disabled: true },
+    const stateMap = {
+      menu: () => {
+        this.btnStart && this.setBtn(this.btnStart, false, "Старт")
+        this.btnPause && (this.btnPause.disabled = true)
+        this.btnRestart && (this.btnRestart.disabled = true)
       },
-      gameover: {
-        btnStart: { disabled: false, text: "Старт" },
-        btnPause: { disabled: true },
-        btnRestart: { disabled: true },
+      gameover: () => {
+        this.btnStart && this.setBtn(this.btnStart, false, "Старт")
+        this.btnPause && (this.btnPause.disabled = true)
+        this.btnRestart && (this.btnRestart.disabled = true)
       },
-      running: {
-        btnStart: { disabled: true },
-        btnPause: { disabled: false, text: "Пауза" },
-        btnRestart: { disabled: false },
+      running: () => {
+        this.btnStart && (this.btnStart.disabled = true)
+        this.btnPause && this.setBtn(this.btnPause, false, "Пауза")
+        this.btnRestart && (this.btnRestart.disabled = false)
       },
-      paused: {
-        btnPause: { text: "Возобновить" },
+      paused: () => {
+        this.btnPause && this.setBtn(this.btnPause, false, "Возобновить")
       },
     }
 
-    const config = states[gameState]
-    if (!config) return
-
-    Object.entries(config).forEach(([btnKey, props]) => {
-      const btn = this[btnKey]
-      if (!btn) return
-      if ("disabled" in props) btn.disabled = props.disabled
-      if ("text" in props) btn.textContent = props.text
-    })
+    stateMap[gameState]?.()
   }
 
-  // Показ/скрытие Game Over
+  setBtn(btn, disabled, text) {
+    btn.disabled = disabled
+    if (text) btn.textContent = text
+  }
+
   showGameOver(wave, score) {
-    this.setDisplay(this.overlayGameOver, "flex")
-    this.setContent(this.goText, `Вы дошли до волны ${wave}. Набрано очков: ${score}.`)
+    if (this.overlayGameOver) this.overlayGameOver.style.display = "flex"
+    if (this.goText) this.goText.textContent = `Вы дошли до волны ${wave}. Набрано очков: ${score}.`
   }
 
   hideGameOver() {
-    this.setDisplay(this.overlayGameOver, "none")
+    if (this.overlayGameOver) this.overlayGameOver.style.display = "none"
   }
 
-  // Показ/скрытие README
   showReadme() {
-    this.setContent(this.readmeTextEl, UIManager.README_TEXT)
-    this.setDisplay(this.modalReadme, "flex")
+    const readmeText = README_TEXT
+    if (this.readmeTextEl) this.readmeTextEl.textContent = readmeText
+    if (this.modalReadme) this.modalReadme.style.display = "flex"
   }
 
   hideReadme() {
-    this.setDisplay(this.modalReadme, "none")
+    if (this.modalReadme) this.modalReadme.style.display = "none"
   }
 
-  // Скачивание README
   downloadReadme() {
-    const blob = new Blob([UIManager.README_TEXT], { type: "text/plain;charset=utf-8" })
+    const blob = new Blob([README_TEXT], { type: "text/plain;charset=utf-8" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
@@ -193,15 +182,13 @@ Top-Down Waves — аркадная survival-игра с видом сверху
     URL.revokeObjectURL(url)
   }
 
-  // Установка коллбеков
   setCallbacks(callbacks) {
     this.callbacks = { ...this.callbacks, ...callbacks }
   }
 
-  // Инициализация начальных значений
   initialize() {
-    this.setContent(this.uiScore, "0")
-    this.setContent(this.uiWave, "-")
+    if (this.uiScore) this.uiScore.textContent = "0"
+    if (this.uiWave) this.uiWave.textContent = "-"
     this.setButtonStates("menu")
   }
 }
